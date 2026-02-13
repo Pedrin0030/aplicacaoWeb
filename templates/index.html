@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Documentos - RMA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
+</head>
+<body>
+    <header>
+        <h1>Gestão de Documentos</h1>
+    </header>
+
+    <main class="container">
+        <section class ="upload-section">
+            <h2>Novo Documento</h2>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="text" id="titulo" name="titulo" placeholder="Título do documento" required>
+                <textarea id="descricao" name="descricao" placeholder="Decrição opcional"></textarea>
+                <input type="file" id="arquivo" name="arquivo" accept=".pdf, .jpg, .png" required>
+                <button type="submit">Enviar Documento</button>
+            </form>
+        </section>
+
+        <hr>
+
+        <section class="list-section">
+            <h2>Documentos Cadastrados</h2>
+            <div id="listaDocumentos" class="grid-docs">
+                <p>Carregando documentos...</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/script.js')}}"></script>
+</body>
+</html>

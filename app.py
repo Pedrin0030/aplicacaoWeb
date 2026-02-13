@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import os 
 
 app = Flask(__name__)
@@ -8,39 +8,49 @@ app = Flask(__name__)
 # configuração do Banco de dados 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gestao_documentos.db'
 app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+# nessa parte comeca a logica e é necessario confirmar se tem a pasta uploads 
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
 
 class Documento(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text, nullable=True)
     arquivopath = db.Column(db.String(255), nullable=False)
-    data_upload = db.Column(db.DateTime, default=datetime.utcnow)
+    data_upload = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=-3))))
     # aqui será o relacionamento para acessar os comentarios 
     comentarios = db.relationship('Comentario', backref='documento', lazy=True)
 
 class Comentario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     texto = db.Column(db.Text, nullable=False)
-    data_hora = db.Column(db.DateTime, default=datetime.utcnow)
+    data_hora = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=-3))))
     documento_id = db.Column(db.Integer, db.ForeignKey('documento.id'), nullable=False)
 
 # definicao das extensoes permitidas
-EXTENSOES_PERMITIDAS = {'jpg', 'jpeg', 'png'}
+EXTENSOES_PERMITIDAS = {'pdf', 'jpg', 'png'}
 
 def arquivo_permitido(filename):
     return '.' in filename and \
-        filename.rsplint('.', 1)[1].lower() in EXTENSOES_PERMITIDAS
+        filename.rsplit('.', 1)[1].lower() in EXTENSOES_PERMITIDAS
 
 
 #criacao do banco de dados
 with app.app_context():
     db.create_all()
 
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 @app.route('/upload', methods=['POST'])
 def upload():
     #pega o arquivo 
-    titulo = request.form.get('tiulo')
+    titulo = request.form.get('titulo')
     descricao = request.form.get('descricao')
     file = request.files.get('arquivo')
 
@@ -55,13 +65,13 @@ def upload():
     # Se for validado 
     nome_arquivo = file.filename 
     caminho_final = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
-    file.salve(caminho_final)
+    file.save(caminho_final)
 
     #criacao do registro no banco de dados
     novo_doc = Documento(
         titulo=titulo,
         descricao=descricao,
-        arquivo_path=nome_arquivo
+        arquivopath=nome_arquivo
     )
 
     try:
@@ -72,9 +82,9 @@ def upload():
         #caso der erro no banco de dados
         if os.path.exists(caminho_final):
             os.remove(caminho_final)
-            return f"Erro ao salvar no banco: {e}", 500
+        return f"Erro ao salvar no banco: {e}", 500
 
-    return "Arquivo salvo com sucesso", 201
+
 
 @app.route('/documentos', methods=['GET'])
 def listar_documentos():
@@ -85,12 +95,20 @@ def listar_documentos():
 
         resultado = []
         for doc in documentos:
+            lista_comentarios = []
+            for c in doc.comentarios:
+                lista_comentarios.append({
+                    "texto": c.texto,
+                    "data": c.data_hora.strftime('%d/%m/%Y %H:%M')
+                })
+
             resultado.append({
                 "id": doc.id,
                 "titulo": doc.titulo,
                 "descricao": doc.descricao,
                 "data_upload": doc.data_upload.strftime('%d/%m/%Y %H:%M'),
-                "arquivo": doc.arquivo_path
+                "arquivo": doc.arquivopath,
+                "comentarios": lista_comentarios
             })
 
         return jsonify(resultado), 200
@@ -128,7 +146,7 @@ def adicionar_comentarios(doc_id):
     except Exception as e:
         return jsonify({"erro": f"Erro ao salvar comentário: {str(e)}"}), 500
     
-    
+
 if __name__ == '__main__':
     # O modo debug=True ajuda muito no desenvolvimento, pois reinicia o app a cada mudança
     app.run(debug=True)
