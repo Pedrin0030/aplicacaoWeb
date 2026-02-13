@@ -1,4 +1,4 @@
-# 📂 Sistema de Gestão de Documentos - RMA Mori Hutchison
+# 📂 Sistema de Gestão de Documentos - RMA (Resende Mori Hutchison)
 
 Este projeto é uma aplicação Web Full Stack desenvolvida para o processo seletivo da **RMA (Resende Mori Hutchison)**. O sistema oferece uma solução completa para o gerenciamento de documentos jurídicos, permitindo upload, listagem em tempo real e um histórico de comentários para cada arquivo.
 
