@@ -3,10 +3,12 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta, timezone
 import os 
 
+basedir = os.path.abspath(os.path.dirname(__file__))
+
 app = Flask(__name__)
 
 # configuração do Banco de dados 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gestao_documentos.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)

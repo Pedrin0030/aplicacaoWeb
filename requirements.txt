@@ -1,3 +1,8 @@
 flask
 flask-sqlalchemy
 gunicorn
+<<<<<<< HEAD
+gunicorn
+=======
+gunicorn
+>>>>>>> 5f8121b (arrumando configuracoes para deploy)
